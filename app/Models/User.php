@@ -6,8 +6,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -44,5 +46,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // --- FILAMENT AUTHORIZATION ---
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // PRODUCTION SAFETY:
+        // Only return true if the user's email matches yours.
+        // This prevents random users from accessing the admin if registration is open.
+        
+        // return $this->email === 'admin@alafdalnews.com'; 
+        // ^^^ CHANGE THIS to your actual email address before pushing!
+        
+        // OR, if you want to allow ALL registered users (simpler for now):
+        return true; 
     }
 }
