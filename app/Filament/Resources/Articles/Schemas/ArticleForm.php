@@ -25,53 +25,29 @@ class ArticleForm
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-
                 DatePicker::make('news_date')
                     ->label('Date')
                     ->default(now())
                     ->required(),
+
                 TimePicker::make('news_time')
                     ->label('Time')
                     ->default(now())
                     ->required(),
+
                 Select::make('id_cat')
                     ->label('Type')
-                    ->options([1 => '1', 0 => '0'])
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
-                // TODO handle these fields appropriately
-                // make default to current username
-                // TextInput::make('addBy')
+                // Select::make('author')
+                //     ->label('Author')
+                //     ->relationship('author', 'name')
+                //     ->searchable()
+                //     ->preload()
                 //     ->required(),
-                // make default to current username
-                // TextInput::make('updateBy')
-                //     ->required(),
-
-                DatePicker::make('addDate')
-                    ->default(now())
-                    ->hidden()
-                    ->required(),
-
-                DatePicker::make('updateDate')
-                    ->default(now())
-                    ->hidden()
-                    ->required(),
-
-                // not in use
-                // TextInput::make('youtube_url')
-                //     ->url()
-                //     ->required(),
-                // TextInput::make('voiceover_url')
-                //     ->url()
-                //     ->required(),
-
-                // Check What is this for
-                // Textarea::make('embedding')
-                //     ->columnSpanFull(),
-
-
-                TextInput::make('author')
-                    ->label('Author'),
 
                 FileUpload::make('news_file')
                     ->multiple()
@@ -91,6 +67,7 @@ class ArticleForm
                 FileUpload::make('image')
                     ->label('Cover Image')
                     ->disk('public')
+                    ->directory('uploads/news')
                     ->visibility('public')
                     ->acceptedFileTypes(['image/*'])
                     ->columnSpanFull(),
@@ -129,6 +106,36 @@ class ArticleForm
                         'table',
                     ])
                     ->columnSpanFull(),
+
+                // TODO handle these fields appropriately
+                // make default to current username
+                // TextInput::make('addBy')
+                //     ->required(),
+                // make default to current username
+                // TextInput::make('updateBy')
+                //     ->required(),
+
+                DatePicker::make('addDate')
+                    ->default(now())
+                    ->hidden()
+                    ->required(),
+
+                DatePicker::make('updateDate')
+                    ->default(now())
+                    ->hidden()
+                    ->required(),
+
+                // not in use
+                // TextInput::make('youtube_url')
+                //     ->url()
+                //     ->required(),
+                // TextInput::make('voiceover_url')
+                //     ->url()
+                //     ->required(),
+
+                // Check What is this for
+                // Textarea::make('embedding')
+                //     ->columnSpanFull(),
 
             ]);
     }

@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Filament\Resources\Articles\Tables;
+
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ArticlesTable
 {
@@ -13,19 +15,20 @@ class ArticlesTable
     {
         return $table
             ->columns([
-                // 1. Cover Image
-                ImageColumn::make('image')
-                    ->label('Cover')
-                    ->disk('public')
-                    ->visibility('public'),
 
-                // 2. Title (Searching the DB column 'news_title', displaying Accessor 'title')
+                // 1. ID
+                TextColumn::make('news_id')
+                    ->label('ID')
+                    ->width('5%')
+                    ->sortable(),
+
                 TextColumn::make('title')
                     ->label('Title')
+                    ->html()
                     ->searchable(query: function ($query, string $search) {
                         return $query->where('news_title', 'like', "%{$search}%");
                     })
-                    ->limit(50)
+                    ->formatStateUsing(fn(string $state): string => Str::limit(strip_tags($state), 50))
                     ->sortable(),
 
                 // 3. Status
@@ -56,11 +59,15 @@ class ArticlesTable
                     ->numeric()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // // 1. Cover Image
+                // ImageColumn::make('image')
+                //     ->label('Cover')
+                //     ->disk('public')
+                //     ->visibility('public'),
             ])
             ->defaultSort('news_id', 'desc')
-            ->filters([
-                
-            ])
+            ->filters([])
             ->recordActions([
                 EditAction::make(),
             ]);
