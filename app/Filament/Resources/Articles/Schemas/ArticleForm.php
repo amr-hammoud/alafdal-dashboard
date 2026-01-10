@@ -2,10 +2,15 @@
 
 namespace App\Filament\Resources\Articles\Schemas;
 
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 
 class ArticleForm
@@ -15,55 +20,116 @@ class ArticleForm
         return $schema
             ->components([
                 Textarea::make('news_title')
+                    ->label('Title')
                     ->required()
+                    ->maxLength(255)
                     ->columnSpanFull(),
-                Textarea::make('news_desc')
-                    ->required()
-                    ->columnSpanFull(),
-                Select::make('active')
-                    ->options(['0', '1'])
-                    ->default('1')
-                    ->required(),
+
+
                 DatePicker::make('news_date')
+                    ->label('Date')
+                    ->default(now())
                     ->required(),
-                TextInput::make('id_cat')
-                    ->required()
-                    ->numeric(),
-                Select::make('important')
+                TimePicker::make('news_time')
+                    ->label('Time')
+                    ->default(now())
+                    ->required(),
+                Select::make('id_cat')
+                    ->label('Type')
                     ->options([1 => '1', 0 => '0'])
                     ->required(),
-                Select::make('notification')
-                    ->options([1 => '1', 0 => '0'])
-                    ->required(),
-                Select::make('show_slider')
-                    ->options([1 => '1', 0 => '0']),
-                TextInput::make('news_time')
-                    ->required(),
-                TextInput::make('addBy')
-                    ->required(),
-                TextInput::make('updateBy')
-                    ->required(),
+
+                // TODO handle these fields appropriately
+                // make default to current username
+                // TextInput::make('addBy')
+                //     ->required(),
+                // make default to current username
+                // TextInput::make('updateBy')
+                //     ->required(),
+
                 DatePicker::make('addDate')
+                    ->default(now())
+                    ->hidden()
                     ->required(),
+
                 DatePicker::make('updateDate')
+                    ->default(now())
+                    ->hidden()
                     ->required(),
-                TextInput::make('views')
-                    ->required()
-                    ->default('0'),
-                TextInput::make('youtube_url')
-                    ->url()
-                    ->required(),
-                TextInput::make('voiceover_url')
-                    ->url()
-                    ->required(),
+
+                // not in use
+                // TextInput::make('youtube_url')
+                //     ->url()
+                //     ->required(),
+                // TextInput::make('voiceover_url')
+                //     ->url()
+                //     ->required(),
+
+                // Check What is this for
+                // Textarea::make('embedding')
+                //     ->columnSpanFull(),
+
+
                 TextInput::make('author')
-                    ->required(),
-                Textarea::make('thumbnail_image')
+                    ->label('Author'),
+
+                FileUpload::make('news_file')
+                    ->multiple()
+                    ->label('Image Gallery')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->acceptedFileTypes(['image/*'])
                     ->columnSpanFull(),
-                Textarea::make('image')
+
+                FileUpload::make('thumbnail_image')
+                    ->label('Thumbnail Image')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->acceptedFileTypes(['image/*'])
                     ->columnSpanFull(),
-                Textarea::make('embedding')
+
+                FileUpload::make('image')
+                    ->label('Cover Image')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->acceptedFileTypes(['image/*'])
                     ->columnSpanFull(),
+
+                Group::make()
+                    ->schema([
+                        Checkbox::make('active')
+                            ->label('Active')
+                            ->default(true)
+                            ->required(),
+                        Checkbox::make('show_slider')
+                            ->label('Show on Home Slider')
+                            ->default(false),
+                    ]),
+                Group::make()
+                    ->schema([
+                        Checkbox::make('important')
+                            ->label('Important')
+                            ->default(false),
+                        Checkbox::make('notification')
+                            ->label('Notification')
+                            ->default(false),
+                    ]),
+
+                RichEditor::make('news_desc')
+                    ->label('Content')
+                    ->required()
+                    ->disableToolbarButtons([
+                        'attachFiles',
+                        'codeBlock',
+                        'blockquote',
+                        'h1',
+                        'h2',
+                        'h3',
+                        'link',
+                        'table',
+                    ])
+                    ->columnSpanFull(),
+
             ]);
     }
 }

@@ -1,10 +1,9 @@
 <?php
 
 namespace App\Filament\Resources\Articles\Tables;
-
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -14,51 +13,61 @@ class ArticlesTable
     {
         return $table
             ->columns([
-                TextColumn::make('active')
-                    ->badge(),
-                TextColumn::make('news_date')
-                    ->date()
+                // 1. Cover Image
+                ImageColumn::make('image')
+                    ->label('Cover')
+                    ->disk('public')
+                    ->visibility('public'),
+
+                // 2. Title (Searching the DB column 'news_title', displaying Accessor 'title')
+                TextColumn::make('title')
+                    ->label('Title')
+                    ->searchable(query: function ($query, string $search) {
+                        return $query->where('news_title', 'like', "%{$search}%");
+                    })
+                    ->limit(50)
                     ->sortable(),
-                TextColumn::make('id_cat')
-                    ->numeric()
+
+                // 3. Status
+                IconColumn::make('active')
+                    ->label('Active')
+                    ->boolean()
                     ->sortable(),
-                TextColumn::make('important')
-                    ->badge(),
-                TextColumn::make('notification')
-                    ->badge(),
-                TextColumn::make('show_slider')
-                    ->badge(),
-                TextColumn::make('news_time')
-                    ->searchable(),
+
                 TextColumn::make('addBy')
+                    ->label('Added By')
+                    ->sortable()
                     ->searchable(),
-                TextColumn::make('updateBy')
+
+                // 4. Date
+                TextColumn::make('news_date')
+                    ->label('Date')
+                    ->date('M d, Y')
+                    ->sortable(),
+
+                TextColumn::make('news_time')
+                    ->label('Time')
+                    ->time('h:i A')
+                    ->sortable()
                     ->searchable(),
-                TextColumn::make('addDate')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('updateDate')
-                    ->date()
-                    ->sortable(),
+
+                // 5. Views (Hidden by default to keep interface clean)
                 TextColumn::make('views')
-                    ->searchable(),
-                TextColumn::make('youtube_url')
-                    ->searchable(),
-                TextColumn::make('voiceover_url')
-                    ->searchable(),
-                TextColumn::make('author')
-                    ->searchable(),
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('news_id', 'desc')
             ->filters([
-                //
+                
             ])
             ->recordActions([
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
+        // ->toolbarActions([
+        //     BulkActionGroup::make([
+        //         DeleteBulkAction::make(),
+        //     ]),
+        // ]);
     }
 }
