@@ -80,7 +80,7 @@ jobs:
             $PHP artisan view:cache
 
             # OPTIONAL - only if you intend to manage schema via migrations:
-            # $PHP artisan migrate --force
+            $PHP artisan migrate --force
 
             echo "Deployment done ✅"
 
