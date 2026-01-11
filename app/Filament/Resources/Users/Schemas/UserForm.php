@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\UserRole;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -29,9 +30,9 @@ class UserForm
                     ->dehydrated(fn($state) => filled($state)) // Only update if user typed a new password
                     ->required(fn(string $context): bool => $context === 'create'), // Required only on create
 
-                \Filament\Forms\Components\Select::make('role')
+                Select::make('role')
                     ->label('Role')
-                    ->options(UserRole::class) // Filament V4 reads the Enum labels automatically!
+                    ->options(UserRole::class)
                     ->required()
                     ->default(UserRole::EDITOR),
             ]);

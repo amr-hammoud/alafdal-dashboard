@@ -12,8 +12,8 @@ enum UserRole: string implements HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::ADMIN => 'CEO / Admin',
-            self::EDITOR => 'Employee / Editor',
+            self::ADMIN => 'Admin',
+            self::EDITOR => 'Editor',
         };
     }
 }
