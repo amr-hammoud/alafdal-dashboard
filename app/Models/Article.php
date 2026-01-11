@@ -41,12 +41,12 @@ class Article extends Model
     protected $casts = [
         'active' => 'boolean',     // Converts enum('0', '1') to true/false
         'important' => 'boolean',
-        'news_date' => 'date',     // Converts string to Carbon date object
         'views' => 'integer',      // Fixes the legacy varchar issue
         'notification' => 'boolean',
         'show_slider' => 'boolean',
-        'addDate' => 'date',
-        'updateDate' => 'date',
+        // 'news_date' => 'date',
+        // 'addDate' => 'date',
+        // 'updateDate' => 'date',
     ];
 
     // --- 3. ACCESSORS & MUTATORS (The "Clean Code" Layer) ---

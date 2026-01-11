@@ -28,11 +28,21 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->login()
+
+            # Theme customization
             ->colors([
-                'primary' => "#892b1e",
+                'primary' => "#931e0e",
+                'gray' => Color::Slate,
             ])
+            ->brandName('Alafdal News')
+            ->brandLogo(asset('logo.jpg'))
+            ->brandLogoHeight('3rem')
+            ->favicon(asset('favicon.ico'))
+
             ->unsavedChangesAlerts()
             ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth('full')
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -40,7 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
+                // AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
