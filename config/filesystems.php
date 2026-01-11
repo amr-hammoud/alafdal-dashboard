@@ -40,12 +40,21 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'root' => storage_path('/home/u856214677/domains/alafdalnews.com/public_html'),
+            'url' => 'https://alafdalnews.com',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
         ],
+
+        // 'public' => [
+        //     'driver' => 'local',
+        //     'root' => storage_path('app/public'),
+        //     'url' => env('APP_URL').'/storage',
+        //     'visibility' => 'public',
+        //     'throw' => false,
+        //     'report' => false,
+        // ],
 
         's3' => [
             'driver' => 's3',
