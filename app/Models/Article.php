@@ -18,13 +18,23 @@ class Article extends Model
         'news_desc',
         'active',
         'news_date',
-        'news_time',
         'id_cat',
         'important',
-        'views',
-        'image', // Cover image filename
+        'notification',
+        'show_slider',
+        'news_time',
         'addBy',
-        'addDate'
+        'updateBy',
+        'addDate',
+        'updateDate',
+        'views',
+        'youtube_url',
+        'voiceover_url',
+        'author',
+        'thumbnail_image',
+        'image',
+        'embedding',
+        'user_id',
     ];
 
     // --- 2. DATA CASTING (Fixing Types) ---
@@ -33,6 +43,10 @@ class Article extends Model
         'important' => 'boolean',
         'news_date' => 'date',     // Converts string to Carbon date object
         'views' => 'integer',      // Fixes the legacy varchar issue
+        'notification' => 'boolean',
+        'show_slider' => 'boolean',
+        'addDate' => 'date',
+        'updateDate' => 'date',
     ];
 
     // --- 3. ACCESSORS & MUTATORS (The "Clean Code" Layer) ---
@@ -75,9 +89,9 @@ class Article extends Model
         return $this->belongsTo(Category::class, 'id_cat', 'id');
     }
 
-    public function gallery()
+    // Relationship to the Gallery Table
+    public function images()
     {
-        // One Article has Many Images in 'news_gallery'
-        return $this->hasMany(Gallery::class, 'news_id', 'news_id');
+        return $this->hasMany(ArticleImage::class, 'news_id');
     }
 }
