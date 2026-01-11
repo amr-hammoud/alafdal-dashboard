@@ -35,10 +35,20 @@ class ArticleForm
 
                                 RichEditor::make('news_desc')
                                     ->label('Content')
-                                    ->required()
                                     ->columnSpanFull()
-                                    ->disableToolbarButtons([
-                                        'attachFiles',
+                                    ->toolbarButtons([
+                                        'bold',
+                                        'italic',
+                                        'underline',
+                                        'strike',
+                                        'link',
+                                        'h2',
+                                        'h3',
+                                        'bulletList',
+                                        'orderedList',
+                                        'blockquote',
+                                        'undo',
+                                        'redo',
                                     ]),
                             ]),
 
@@ -52,8 +62,7 @@ class ArticleForm
                                     ->disk('public')
                                     // We save to a temp folder first; the Observer will move it to {id}/
                                     ->directory('uploads/news/temp')
-                                    ->visibility('public')
-                                    ->required(),
+                                    ->visibility('public'),
 
                                 // 2. GALLERY (Multiple Images)
                                 Repeater::make('images')
@@ -106,16 +115,16 @@ class ArticleForm
                                     ->label('Author')
                                     ->options(Author::all()->pluck('name', 'name'))
                                     ->searchable()
-                                    ->required()
+                                    ->placeholder('No specific author')
                                     ->createOptionForm([
                                         TextInput::make('name')
                                             ->required()
                                             ->maxLength(255),
                                     ])
                                     ->createOptionUsing(function (array $data) {
-                                        $newAuthor = Author::create($data);
-                                        return $newAuthor->name;
-                                    }),
+                                        return Author::create($data)->name;
+                                    })
+                                    ->dehydrateStateUsing(fn($state) => $state ?? ''),
 
                                 DatePicker::make('news_date')
                                     ->label('Publish Date')

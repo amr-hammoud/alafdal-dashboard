@@ -6,6 +6,8 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
@@ -16,11 +18,16 @@ class ArticlesTable
         return $table
             ->columns([
 
-                // 1. ID
-                TextColumn::make('news_id')
-                    ->label('ID')
-                    ->width('5%')
-                    ->sortable(),
+                ToggleColumn::make('active')
+                    ->label('Active')
+                    ->sortable()
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->updateStateUsing(function ($record, $state) {
+                        $newValue = $state ? '1' : '0';
+                        $record->update(['active' => $newValue]);
+                        return $newValue;
+                    }),
 
                 TextColumn::make('title')
                     ->label('Title')
@@ -31,32 +38,40 @@ class ArticlesTable
                     ->formatStateUsing(fn(string $state): string => Str::limit(strip_tags($state), 50))
                     ->sortable(),
 
-                // 3. Status
-                IconColumn::make('active')
-                    ->label('Active')
-                    ->boolean()
-                    ->sortable(),
+                // IconColumn::make('active')
+                //     ->label('Active')
+                //     ->boolean()
+                //     ->sortable(),
 
                 TextColumn::make('addBy')
                     ->label('Added By')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 // 4. Date
                 TextColumn::make('news_date')
                     ->label('Date')
                     ->date('M d, Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('news_time')
                     ->label('Time')
                     ->time('h:i A')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 // 5. Views (Hidden by default to keep interface clean)
                 TextColumn::make('views')
                     ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('news_id')
+                    ->label('ID')
+                    ->width('5%')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -68,9 +83,13 @@ class ArticlesTable
             ])
             ->defaultSort('news_id', 'desc')
             ->filters([])
+
             ->recordActions([
-                EditAction::make(),
-            ]);
+                EditAction::make()
+                    ->icon('heroicon-s-pencil-square')
+                    ->iconButton()
+                    ->tooltip('Edit Article'),
+            ], position: RecordActionsPosition::BeforeColumns);
         // ->toolbarActions([
         //     BulkActionGroup::make([
         //         DeleteBulkAction::make(),
