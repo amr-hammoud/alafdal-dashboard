@@ -27,6 +27,12 @@ class Category extends Model
 
     // 2. RELATIONSHIPS
 
+    // A category is created by a user
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     // A category belongs to a parent category
     public function parent()
     {

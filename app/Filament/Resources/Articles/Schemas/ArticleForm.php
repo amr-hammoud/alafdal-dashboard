@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Articles\Schemas;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class ArticleForm
 {
@@ -107,13 +109,16 @@ class ArticleForm
                     ])
                     ->columnSpanFull(),
 
-                // TODO handle these fields appropriately
-                // make default to current username
-                // TextInput::make('addBy')
-                //     ->required(),
-                // make default to current username
-                // TextInput::make('updateBy')
-                //     ->required(),
+                // 1. Save the ID for the new Relationship
+                Hidden::make('user_id')
+                    ->default(fn() => Auth::id()),
+
+                // 2. Save the Name for the Legacy Website (Backend Compatibility)
+                Hidden::make('addBy')
+                    ->default(fn() => Auth::user()?->name ?? 'System'),
+
+                Hidden::make('updateBy')
+                    ->default(fn() => Auth::user()?->name ?? 'System'),
 
                 DatePicker::make('addDate')
                     ->default(now())

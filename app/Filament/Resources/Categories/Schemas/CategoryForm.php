@@ -9,6 +9,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryForm
 {
@@ -43,8 +44,16 @@ class CategoryForm
                     ])->columns(2),
 
                 // AUDIT FIELDS (Hidden)
-                // Hidden::make('addBy')
-                //     ->default(fn() => auth()->user()->name ?? 'System'),
+                // 1. Save the ID for the new Relationship
+                Hidden::make('user_id')
+                    ->default(fn() => Auth::id()),
+
+                // 2. Save the Name for the Legacy Website (Backend Compatibility)
+                Hidden::make('addBy')
+                    ->default(fn() => Auth::user()?->name ?? 'System'),
+
+                Hidden::make('updateBy')
+                    ->default(fn() => Auth::user()?->name ?? 'System'),
 
                 Hidden::make('addDate')
                     ->default(now()),

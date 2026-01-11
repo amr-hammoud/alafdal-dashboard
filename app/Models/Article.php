@@ -65,6 +65,11 @@ class Article extends Model
     }
 
     // --- 4. RELATIONSHIPS ---
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'id_cat', 'id');
