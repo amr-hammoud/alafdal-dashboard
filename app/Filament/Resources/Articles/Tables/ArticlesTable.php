@@ -83,7 +83,7 @@ class ArticlesTable
             ])
             ->defaultSort('news_id', 'desc')
             ->filters([])
-
+            ->recordUrl(null)
             ->recordActions([
                 EditAction::make()
                     ->icon('heroicon-s-pencil-square')
