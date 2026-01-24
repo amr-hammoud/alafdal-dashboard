@@ -12,6 +12,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -23,173 +24,160 @@ class ArticleForm
     {
         return $schema
             ->components([
-                Group::make()
-                    ->schema([
-                        Section::make('Article Content')
-                            ->collapsible()
-                            ->schema([
-                                TextInput::make('news_title')
-                                    ->label('Title')
-                                    ->required()
-                                    ->maxLength(255),
 
-                                RichEditor::make('news_desc')
-                                    ->label('Content')
-                                    ->columnSpanFull()
-                                    ->toolbarButtons([
-                                        'bold',
-                                        'italic',
-                                        'underline',
-                                        'strike',
-                                        'link',
-                                        'h2',
-                                        'h3',
-                                        'bulletList',
-                                        'orderedList',
-                                        'blockquote',
-                                        'undo',
-                                        'redo',
-                                    ]),
-                            ]),
+                TextInput::make('news_title')
+                    ->label('Title')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull()
+                    ->autofocus(),
 
-                        Section::make('Media')
-                            ->collapsible()
-                            ->schema([
-                                // 1. COVER IMAGE (Main)
-                                FileUpload::make('image')
-                                    ->label('Cover Image')
-                                    ->image()
-                                    ->disk('public')
-                                    // We save to a temp folder first; the Observer will move it to {id}/
-                                    ->directory('uploads/news/temp')
-                                    ->visibility('public'),
+                DatePicker::make('news_date')
+                    ->label('Date')
+                    ->default(now())
+                    ->required(),
 
-                                // 2. GALLERY (Multiple Images)
-                                Repeater::make('images')
-                                    ->relationship('images') // Connects to the hasMany we created
-                                    ->label('Image Gallery')
-                                    ->schema([
-                                        FileUpload::make('image_name')
-                                            ->label('Image')
-                                            ->image()
-                                            ->disk('public')
-                                            ->directory('uploads/news/temp')
-                                            ->visibility('public')
-                                            ->required(),
+                TimePicker::make('news_time')
+                    ->label('Time')
+                    ->default(now())
+                    ->required(),
 
-                                        // These satisfy the "NOT NULL" rules during the first INSERT.
-                                        // The Observer will overwrite 'thumb_name' milliseconds later.
+                Select::make('id_cat')
+                    ->label('Type')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
 
-                                        Hidden::make('thumb_name')
-                                            ->default('')
-                                            ->dehydrateStateUsing(fn($state) => $state ?? ''),
-
-                                        Hidden::make('active')
-                                            ->default('1')
-                                            ->dehydrateStateUsing(fn($state) => '1'),
-
-                                        Hidden::make('coverpage')
-                                            ->default('0')
-                                            ->dehydrateStateUsing(fn($state) => '0'),
-                                    ])
-                                    ->grid(3) // Show 3 images per row
-                                    ->defaultItems(0)
-                                    ->reorderableWithButtons(),
-                            ]),
+                Select::make('author')
+                    ->label('Author')
+                    ->options(Author::all()->pluck('name', 'name'))
+                    ->searchable()
+                    ->placeholder('No specific author')
+                    ->createOptionForm([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
                     ])
-                    ->columnSpan(2),
+                    ->createOptionUsing(function (array $data) {
+                        return Author::create($data)->name;
+                    })
+                    ->dehydrateStateUsing(fn($state) => $state ?? ''),
 
-                Group::make()
+                // 1. COVER IMAGE (Main)
+                FileUpload::make('image')
+                    ->label('Cover Image')
+                    ->image()
+                    ->disk('public')
+                    ->columnSpanFull()
+                    // We save to a temp folder first; the Observer will move it to {id}/
+                    ->directory('uploads/news/temp')
+                    ->visibility('public'),
+
+
+                // 2. GALLERY (Multiple Images) Gallery
+                Repeater::make('images')
+                    ->relationship('images') // Connects to the hasMany we created
+                    ->label('Gallery')
                     ->schema([
-                        Section::make('Publishing Details')
-                            ->collapsible()
-                            ->schema([
-                                Select::make('id_cat')
-                                    ->label('Category')
-                                    ->relationship('category', 'name')
-                                    ->searchable()
-                                    ->preload()
-                                    ->required(),
+                        FileUpload::make('image_name')
+                            ->label('Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('uploads/news/temp')
+                            ->visibility('public')
+                            ->required(),
 
-                                Select::make('author')
-                                    ->label('Author')
-                                    ->options(Author::all()->pluck('name', 'name'))
-                                    ->searchable()
-                                    ->placeholder('No specific author')
-                                    ->createOptionForm([
-                                        TextInput::make('name')
-                                            ->required()
-                                            ->maxLength(255),
-                                    ])
-                                    ->createOptionUsing(function (array $data) {
-                                        return Author::create($data)->name;
-                                    })
-                                    ->dehydrateStateUsing(fn($state) => $state ?? ''),
+                        // These satisfy the "NOT NULL" rules during the first INSERT.
+                        // The Observer will overwrite 'thumb_name' milliseconds later.
 
-                                DatePicker::make('news_date')
-                                    ->label('Publish Date')
-                                    ->default(now())
-                                    ->required(),
+                        Hidden::make('thumb_name')
+                            ->default('')
+                            ->dehydrateStateUsing(fn($state) => $state ?? ''),
 
-                                TimePicker::make('news_time')
-                                    ->label('Time')
-                                    ->default(now())
-                                    ->required(),
-                            ])->columnSpan(1),
+                        Hidden::make('active')
+                            ->default('1')
+                            ->dehydrateStateUsing(fn($state) => '1'),
 
-                        Section::make('Settings')
-                            ->collapsible()
-                            ->schema([
-                                Checkbox::make('active')
-                                    ->label('Published')
-                                    ->default(true)
-                                    // Force convert boolean true/false to string '1'/'0'
-                                    ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
-
-                                Checkbox::make('important')
-                                    ->label('Breaking News')
-                                    ->default(false)
-                                    ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
-
-                                Checkbox::make('show_slider')
-                                    ->label('Show on Slider')
-                                    ->default(false)
-                                    ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
-
-                                Checkbox::make('notification')
-                                    ->label('Send Notification')
-                                    ->default(false)
-                                    ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
-                            ])->columnSpan(1),
-
-                        // HIDDEN AUDIT FIELDS
-                        Hidden::make('user_id')
-                            ->default(fn() => Auth::id())
-                            ->dehydrated(true),
-
-
-                        Hidden::make('addBy')
-                            ->default(fn() => Auth::user()?->name ?? 'System')
-                            ->dehydrated(true),
-
-                        Hidden::make('updateBy')
-                            ->default(fn() => Auth::user()?->name ?? 'System')
-                            ->dehydrated(true),
-
-                        Hidden::make('addDate')
-                            ->default(now())
-                            ->dehydrated(true),
-
-                        Hidden::make('updateDate')
-                            ->default(now())
-                            ->dehydrated(true),
-
-                        Hidden::make('views')
-                            ->default(0)
-                            ->dehydrated(true),
+                        Hidden::make('coverpage')
+                            ->default('0')
+                            ->dehydrateStateUsing(fn($state) => '0'),
                     ])
-                    ->columnSpan(2),
+                    ->grid(2) // Show 2 images per row
+                    ->addActionLabel('Add Image')
+                    ->addActionAlignment('start')
+                    ->columnSpanFull()
+                    ->defaultItems(0),
 
-            ]);
+
+                // Checkbox::make('active')
+                //     ->label('Published')
+                //     ->default(true)
+                //     // Force convert boolean true/false to string '1'/'0'
+                //     ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
+
+                Group::make([
+                    Checkbox::make('important')
+                        ->label('Important')
+                        ->default(false)
+                        ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
+
+                    Checkbox::make('show_slider')
+                        ->label('Slider')
+                        ->default(false)
+                        ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
+
+                    Checkbox::make('notification')
+                        ->label('Notification')
+                        ->default(false)
+                        ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
+                ])->columns(1),
+
+
+
+                RichEditor::make('news_desc')
+                    ->label('Description')
+                    ->columnSpanFull()
+                    ->toolbarButtons([
+                        'bold',
+                        'italic',
+                        'underline',
+                        'strike',
+                        'link',
+                        'h2',
+                        'h3',
+                        'bulletList',
+                        'orderedList',
+                    ]),
+
+
+                // HIDDEN AUDIT FIELDS
+                Hidden::make('user_id')
+                    ->default(fn() => Auth::id())
+                    ->dehydrated(true),
+
+
+                Hidden::make('addBy')
+                    ->default(fn() => Auth::user()?->name ?? 'System')
+                    ->dehydrated(true),
+
+                Hidden::make('updateBy')
+                    ->default(fn() => Auth::user()?->name ?? 'System')
+                    ->dehydrated(true),
+
+                Hidden::make('addDate')
+                    ->default(now())
+                    ->dehydrated(true),
+
+                Hidden::make('updateDate')
+                    ->default(now())
+                    ->dehydrated(true),
+
+                Hidden::make('views')
+                    ->default(0)
+                    ->dehydrated(true),
+
+            ])
+            ->dense();
     }
 }
