@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\Articles\Tables;
 
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -38,11 +36,6 @@ class ArticlesTable
                     ->formatStateUsing(fn(string $state): string => Str::limit(strip_tags($state), 50))
                     ->sortable(),
 
-                // IconColumn::make('active')
-                //     ->label('Active')
-                //     ->boolean()
-                //     ->sortable(),
-
                 TextColumn::make('addBy')
                     ->label('Added By')
                     ->sortable()
@@ -75,11 +68,6 @@ class ArticlesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                // // 1. Cover Image
-                // ImageColumn::make('image')
-                //     ->label('Cover')
-                //     ->disk('public')
-                //     ->visibility('public'),
             ])
             ->defaultSort('news_id', 'desc')
             ->filters([])
@@ -88,7 +76,7 @@ class ArticlesTable
                 EditAction::make()
                     ->icon('heroicon-s-pencil-square')
                     ->iconButton()
-                    ->tooltip('Edit Article'),
+                    ->tooltip('Edit News'),
             ], position: RecordActionsPosition::BeforeColumns);
         // ->toolbarActions([
         //     BulkActionGroup::make([
