@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Categories;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Filament\Resources\Categories\Pages\EditCategory;
 use App\Filament\Resources\Categories\Pages\ListCategories;
@@ -13,13 +14,29 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use UnitEnum;
+use Filament\Facades\Filament;
 
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        if (Filament::auth()->user()->role === UserRole::ADMIN) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canAccess(): bool
+    {
+        if (Filament::auth()->user()->role === UserRole::ADMIN) {
+            return true;
+        }
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {

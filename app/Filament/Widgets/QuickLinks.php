@@ -19,32 +19,33 @@ class QuickLinks extends Widget
 
     public function getLinks(): array
     {
-        return [
-            [
-                'label' => 'Articles',
-                'url' => ArticleResource::getUrl(),
-                'icon' => 'heroicon-o-newspaper',
-            ],
-            [
-                'label' => 'Authors',
-                'url' => AuthorResource::getUrl(),
-                'icon' => 'heroicon-o-user-group',
-            ],
-            [
-                'label' => 'Categories',
-                'url' => CategoryResource::getUrl(),
-                'icon' => 'heroicon-o-tag',
-            ],
-            [
-                'label' => 'Users',
-                'url' => UserResource::getUrl(),
-                'icon' => 'heroicon-o-users',
-            ],
-            [
+        $links = [];
+
+        $resources = [
+            'Articles' => ['resource' => ArticleResource::class, 'icon' => 'heroicon-o-newspaper'],
+            'Authors' => ['resource' => AuthorResource::class, 'icon' => 'heroicon-o-user-group'],
+            'Categories' => ['resource' => CategoryResource::class, 'icon' => 'heroicon-o-tag'],
+            'Users' => ['resource' => UserResource::class, 'icon' => 'heroicon-o-users'],
+        ];
+
+        foreach ($resources as $label => $config) {
+            if ($config['resource']::canAccess()) {
+                $links[] = [
+                    'label' => $label,
+                    'url' => $config['resource']::getUrl(),
+                    'icon' => $config['icon'],
+                ];
+            }
+        }
+
+        if (Analytics::canAccess()) {
+            $links[] = [
                 'label' => 'Analytics',
                 'url' => Analytics::getUrl(),
                 'icon' => 'heroicon-o-presentation-chart-line',
-            ],
-        ];
+            ];
+        }
+
+        return $links;
     }
 }
