@@ -30,17 +30,8 @@ class ArticleForm
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull()
+                    ->autocomplete(false)
                     ->autofocus(),
-
-                DatePicker::make('news_date')
-                    ->label('Date')
-                    ->default(now())
-                    ->required(),
-
-                TimePicker::make('news_time')
-                    ->label('Time')
-                    ->default(now())
-                    ->required(),
 
                 Select::make('id_cat')
                     ->label('Type')
@@ -63,6 +54,16 @@ class ArticleForm
                         return Author::create($data)->name;
                     })
                     ->dehydrateStateUsing(fn($state) => $state ?? ''),
+
+                DatePicker::make('news_date')
+                    ->label('Date')
+                    ->default(now())
+                    ->required(),
+
+                TimePicker::make('news_time')
+                    ->label('Time')
+                    ->default(now())
+                    ->required(),
 
                 // 1. COVER IMAGE (Main)
                 FileUpload::make('image')
