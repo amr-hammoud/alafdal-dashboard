@@ -58,12 +58,14 @@ class ArticleForm
                 DatePicker::make('news_date')
                     ->label('Date')
                     ->default(now())
-                    ->required(),
+                    ->required()
+                    ->hidden(fn($record) => $record === null),
 
                 TimePicker::make('news_time')
                     ->label('Time')
                     ->default(now())
-                    ->required(),
+                    ->required()
+                    ->hidden(fn($record) => $record === null),
 
                 // 1. COVER IMAGE (Main)
                 FileUpload::make('image')
