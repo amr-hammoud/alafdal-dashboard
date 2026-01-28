@@ -16,6 +16,8 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ArticleForm
 {
@@ -72,7 +74,27 @@ class ArticleForm
                     ->columnSpanFull()
                     // We save to a temp folder first; the Observer will move it to {id}/
                     ->directory('uploads/news/temp')
-                    ->visibility('public'),
+                    ->visibility('public')
+                    // Convert stored filename back to full path for preview
+                    ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => $file->getClientOriginalName())
+                    ->afterStateHydrated(function (FileUpload $component, $state, $record) {
+                        if ($record && $state && !str_contains($state, '/')) {
+                            // State is just a filename, convert to full path
+                            $fullPath = "uploads/news/{$record->news_id}/{$state}";
+                            if (Storage::disk('public')->exists($fullPath)) {
+                                $component->state([$fullPath]);
+                            }
+                        }
+                    })
+                    ->dehydrateStateUsing(function ($state) {
+                        // If state is an array, get the first value
+                        $path = is_array($state) ? ($state[0] ?? null) : $state;
+                        if (!$path) return null;
+                        
+                        // If it's already just a filename (no slashes), return as-is
+                        // Otherwise return the full path (observer will handle it)
+                        return $path;
+                    }),
 
 
                 // 2. GALLERY (Multiple Images) Gallery
@@ -86,7 +108,26 @@ class ArticleForm
                             ->disk('public')
                             ->directory('uploads/news/temp')
                             ->visibility('public')
-                            ->required(),
+                            ->required()
+                            // Convert stored filename back to full path for preview
+                            ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => $file->getClientOriginalName())
+                            ->afterStateHydrated(function (FileUpload $component, $state, $record) {
+                                if ($record && $state && !str_contains($state, '/')) {
+                                    // State is just a filename, convert to full path
+                                    $fullPath = "uploads/news/{$record->news_id}/{$state}";
+                                    if (Storage::disk('public')->exists($fullPath)) {
+                                        $component->state([$fullPath]);
+                                    }
+                                }
+                            })
+                            ->dehydrateStateUsing(function ($state) {
+                                // If state is an array, get the first value
+                                $path = is_array($state) ? ($state[0] ?? null) : $state;
+                                if (!$path) return null;
+                                
+                                // Return the path (observer will handle it)
+                                return $path;
+                            }),
 
                         // These satisfy the "NOT NULL" rules during the first INSERT.
                         // The Observer will overwrite 'thumb_name' milliseconds later.

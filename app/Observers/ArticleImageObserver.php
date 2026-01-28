@@ -21,7 +21,23 @@ class ArticleImageObserver
         $originalPath = $model->image_name;
 
         // Safety: Ensure we have a parent news_id
-        if (!$model->news_id || strpos($originalPath, "uploads/news/{$model->news_id}/") !== false) {
+        if (!$model->news_id) {
+            return;
+        }
+        
+        // If it's already in the correct folder, just ensure we store only the filename
+        if (strpos($originalPath, "uploads/news/{$model->news_id}/") !== false) {
+            // Extract just the filename for DB storage (legacy format)
+            $fileName = basename($originalPath);
+            if ($model->image_name !== $fileName) {
+                $model->image_name = $fileName;
+                $model->saveQuietly();
+            }
+            return;
+        }
+
+        // If it's just a filename (no path), it's already processed, skip
+        if (!str_contains($originalPath, '/')) {
             return;
         }
 

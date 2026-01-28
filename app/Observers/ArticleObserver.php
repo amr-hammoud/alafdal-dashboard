@@ -46,8 +46,19 @@ class ArticleObserver
     {
         $originalPath = $model->$imageCol; // e.g., uploads/news/temp/abc.jpg
 
-        // If it's already in the correct folder, skip
+        // If it's already in the correct folder, just ensure we store only the filename
         if (strpos($originalPath, "uploads/news/{$model->news_id}/") !== false) {
+            // Extract just the filename for DB storage (legacy format)
+            $fileName = basename($originalPath);
+            if ($model->$imageCol !== $fileName) {
+                $model->$imageCol = $fileName;
+                $model->saveQuietly();
+            }
+            return;
+        }
+
+        // If it's just a filename (no path), it's already processed, skip
+        if (!str_contains($originalPath, '/')) {
             return;
         }
 
