@@ -61,7 +61,8 @@ class ArticleForm
                     ->displayFormat('d/m/Y - h:i A')
                     ->seconds(false)
                     ->timezone('Asia/Beirut')
-                    ->hidden(fn($record) => $record === null),
+                    ->hidden(fn($record) => $record === null)
+                    ->dehydrated(true),
 
                 // 1. COVER IMAGE (Main)
                 FileUpload::make('image')
