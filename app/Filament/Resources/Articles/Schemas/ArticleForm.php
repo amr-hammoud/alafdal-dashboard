@@ -4,14 +4,13 @@ namespace App\Filament\Resources\Articles\Schemas;
 
 use App\Models\Author;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -55,16 +54,12 @@ class ArticleForm
                     })
                     ->dehydrateStateUsing(fn($state) => $state ?? ''),
 
-                DatePicker::make('news_date')
-                    ->label('Date')
+                DateTimePicker::make('date_time_utc')
+                    ->label('Date & Time')
                     ->default(now())
                     ->required()
-                    ->hidden(fn($record) => $record === null),
-
-                TimePicker::make('news_time')
-                    ->label('Time')
-                    ->default(now())
-                    ->required()
+                    ->displayFormat('d/m/Y - h:i A')
+                    ->seconds(false)
                     ->hidden(fn($record) => $record === null),
 
                 // 1. COVER IMAGE (Main)

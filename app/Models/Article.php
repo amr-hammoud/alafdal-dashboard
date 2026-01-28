@@ -35,6 +35,7 @@ class Article extends Model
         'image',
         'embedding',
         'user_id',
+        'date_time_utc',
     ];
 
     // --- 2. DATA CASTING (Fixing Types) ---
@@ -44,6 +45,7 @@ class Article extends Model
         'views' => 'integer',      // Fixes the legacy varchar issue
         'notification' => 'boolean',
         'show_slider' => 'boolean',
+        'date_time_utc' => 'datetime:Y-m-d H:i:s', // Main datetime for article publication in UTC
         // 'news_date' => 'date',
         // 'addDate' => 'date',
         // 'updateDate' => 'date',
