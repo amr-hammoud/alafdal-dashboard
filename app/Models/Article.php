@@ -45,7 +45,7 @@ class Article extends Model
         'views' => 'integer',      // Fixes the legacy varchar issue
         'notification' => 'boolean',
         'show_slider' => 'boolean',
-        'date_time_utc' => 'datetime:Y-m-d H:i:s', // Main datetime for article publication in UTC
+        'date_time_utc' => 'datetime', // Main datetime - stored as UTC in DB, displayed in user's timezone
         // 'news_date' => 'date',
         // 'addDate' => 'date',
         // 'updateDate' => 'date',

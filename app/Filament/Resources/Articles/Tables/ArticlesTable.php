@@ -46,6 +46,7 @@ class ArticlesTable
                 TextColumn::make('date_time_utc')
                     ->label('Date & Time')
                     ->dateTime('M d, Y - h:i A')
+                    ->timezone('Asia/Beirut')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
 

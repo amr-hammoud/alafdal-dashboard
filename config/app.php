@@ -69,6 +69,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | This timezone is used for displaying dates and times to users in the UI.
+    | While the database stores all datetimes in UTC (as defined above),
+    | this setting controls how those dates are displayed to end users.
+    | You can set this per-user or use a default timezone for your region.
+    |
+    | Common values: 'Asia/Riyadh', 'Asia/Dubai', 'Europe/London', etc.
+    | Full list: https://www.php.net/manual/en/timezones.php
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Beirut'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

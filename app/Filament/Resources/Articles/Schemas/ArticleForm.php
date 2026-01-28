@@ -60,6 +60,7 @@ class ArticleForm
                     ->required()
                     ->displayFormat('d/m/Y - h:i A')
                     ->seconds(false)
+                    ->timezone('Asia/Beirut')
                     ->hidden(fn($record) => $record === null),
 
                 // 1. COVER IMAGE (Main)
