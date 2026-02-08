@@ -12,9 +12,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,6 +35,7 @@ class ArticleForm
                     ->label('Type')
                     ->options(Category::all()->pluck('name', 'id'))
                     ->searchable()
+                    ->default(20)
                     ->required(),
 
                 Select::make('author')
