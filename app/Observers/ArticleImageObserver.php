@@ -10,69 +10,75 @@ class ArticleImageObserver
 
     public function saved(ArticleImage $gallery): void
     {
-        if ($gallery->isDirty('image_name') && $gallery->image_name) {
-            // Re-use logic: Move to {id} folder and make thumb
-            $this->processGalleryImage($gallery);
+        // Get the raw image_name value from attributes (bypasses accessor)
+        $rawImageName = $gallery->getAttributes()['image_name'] ?? null;
+        
+        if ($gallery->isDirty('image_name') && $rawImageName) {
+            $this->processGalleryImage($gallery, $rawImageName);
         }
     }
 
-    private function processGalleryImage($model)
+    /**
+     * Process gallery image: Move from temp to article folder and create thumbnail
+     */
+    private function processGalleryImage(ArticleImage $gallery, string $imagePath): void
     {
-        $originalPath = $model->image_name;
-
+        $disk = Storage::disk('public');
+        
         // Safety: Ensure we have a parent news_id
-        if (!$model->news_id) {
+        if (!$gallery->news_id) {
             return;
         }
         
-        // If it's already in the correct folder, just ensure we store only the filename
-        if (strpos($originalPath, "uploads/news/{$model->news_id}/") !== false) {
-            // Extract just the filename for DB storage (legacy format)
-            $fileName = basename($originalPath);
-            if ($model->image_name !== $fileName) {
-                $model->image_name = $fileName;
-                $model->saveQuietly();
-            }
+        // If it's already in the correct folder, just store filename
+        if (str_contains($imagePath, "uploads/news/{$gallery->news_id}/")) {
+            $fileName = basename($imagePath);
+            $gallery->setRawAttributes(array_merge(
+                $gallery->getAttributes(),
+                ['image_name' => $fileName]
+            ));
+            $gallery->saveQuietly();
             return;
         }
 
-        // If it's just a filename (no path), it's already processed, skip
-        if (!str_contains($originalPath, '/')) {
+        // If it's just a filename (no path), it's already processed
+        if (!str_contains($imagePath, '/')) {
             return;
         }
 
-        $disk = Storage::disk('public');
-        $fileName = basename($originalPath);
-
-        // Destination: uploads/news/{id}/
-        $newDir = "uploads/news/{$model->news_id}/";
+        // It's a temp file, need to move it
+        $fileName = basename($imagePath);
+        $newDir = "uploads/news/{$gallery->news_id}/";
         $newPath = $newDir . $fileName;
-
-        // Thumb: uploads/news/{id}/thumb/
         $thumbDir = $newDir . "thumb/";
         $thumbName = pathinfo($fileName, PATHINFO_FILENAME) . "_thumb.jpg";
         $thumbPath = $thumbDir . $thumbName;
 
+        // Create directories
         if (!$disk->exists($newDir)) $disk->makeDirectory($newDir);
         if (!$disk->exists($thumbDir)) $disk->makeDirectory($thumbDir);
 
-        if ($disk->exists($originalPath)) {
-            $disk->move($originalPath, $newPath);
+        // Move the main file
+        if ($disk->exists($imagePath)) {
+            $disk->move($imagePath, $newPath);
 
-            // Save JUST the filename to DB (Legacy format)
-            $model->image_name = $fileName;
+            // Generate thumbnail
+            $this->createThumbnail($disk->path($newPath), $disk->path($thumbPath));
+
+            // Update model with just the filename (legacy format)
+            $gallery->setRawAttributes(array_merge(
+                $gallery->getAttributes(),
+                [
+                    'image_name' => $fileName,
+                    'thumb_name' => $thumbName,
+                ]
+            ));
+            $gallery->saveQuietly();
         }
-
-        // Generate Thumb
-        $this->createThumbnail($disk->path($newPath), $disk->path($thumbPath));
-
-        $model->thumb_name = $thumbName;
-        $model->saveQuietly();
     }
 
     private function createThumbnail($src, $dest)
     {
-        // Simple GD Thumbnailer (150x150)
         $info = @getimagesize($src);
         if (!$info) return;
 
@@ -86,45 +92,7 @@ class ArticleImageObserver
         $tmp = imagecreatetruecolor(150, 150);
         imagecopyresampled($tmp, $img, 0, 0, 0, 0, 150, 150, imagesx($img), imagesy($img));
         imagejpeg($tmp, $dest, 85);
-    }
-
-    /**
-     * Handle the ArticleImage "created" event.
-     */
-    public function created(ArticleImage $articleImage): void
-    {
-        //
-    }
-
-    /**
-     * Handle the ArticleImage "updated" event.
-     */
-    public function updated(ArticleImage $articleImage): void
-    {
-        //
-    }
-
-    /**
-     * Handle the ArticleImage "deleted" event.
-     */
-    public function deleted(ArticleImage $articleImage): void
-    {
-        //
-    }
-
-    /**
-     * Handle the ArticleImage "restored" event.
-     */
-    public function restored(ArticleImage $articleImage): void
-    {
-        //
-    }
-
-    /**
-     * Handle the ArticleImage "force deleted" event.
-     */
-    public function forceDeleted(ArticleImage $articleImage): void
-    {
-        //
+        imagedestroy($img);
+        imagedestroy($tmp);
     }
 }

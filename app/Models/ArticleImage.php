@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Storage;
 
 class ArticleImage extends Model
 {
@@ -18,9 +20,59 @@ class ArticleImage extends Model
         'active',
     ];
 
+    /**
+     * Image name accessor/mutator: Converts between filename (DB) and full path (App)
+     * 
+     * GET: "filename.jpg" → "uploads/news/{news_id}/filename.jpg"
+     * SET: "uploads/news/temp/filename.jpg" → stores as-is (observer handles)
+     *      "uploads/news/{id}/filename.jpg" → stores "filename.jpg"
+     */
+    protected function imageName(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (!$value) return null;
+                
+                // If it's already a full path, return as-is
+                if (str_contains($value, '/')) {
+                    return $value;
+                }
+                
+                // Convert filename to full path
+                if ($this->news_id) {
+                    $fullPath = "uploads/news/{$this->news_id}/{$value}";
+                    if (Storage::disk('public')->exists($fullPath)) {
+                        return $fullPath;
+                    }
+                }
+                
+                return $value;
+            },
+            set: function ($value) {
+                if (!$value) return null;
+                
+                // If it's in the article's folder, extract just filename for DB
+                if ($this->news_id && str_contains($value, "uploads/news/{$this->news_id}/")) {
+                    return basename($value);
+                }
+                
+                // For temp uploads or new files, store full path (observer will process)
+                return $value;
+            },
+        );
+    }
+
     // Relationship back to Article
     public function article()
     {
         return $this->belongsTo(Article::class, 'news_id');
+    }
+
+    /**
+     * Get the raw image filename as stored in DB (bypasses accessor)
+     */
+    public function getRawImageNameAttribute(): ?string
+    {
+        return $this->attributes['image_name'] ?? null;
     }
 }

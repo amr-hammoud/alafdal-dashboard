@@ -11,12 +11,14 @@ class ArticleObserver
 
     public function saved(Article $article): void
     {
+        // Get the raw image value from attributes (bypasses accessor)
+        $rawImage = $article->getAttributes()['image'] ?? null;
+        
         // 1. Handle Cover Image (news_tbl)
-        if ($article->isDirty('image') && $article->image) {
-            $this->processImage($article, 'image', 'thumbnail_image');
+        if ($article->isDirty('image') && $rawImage) {
+            $this->processImage($article, $rawImage);
 
             // Sync Cover to Gallery (Legacy Requirement: Cover is also in gallery with coverpage=1)
-            // Check if we already have a cover entry
             $galleryEntry = ArticleImage::where('news_id', $article->news_id)
                 ->where('coverpage', '1')
                 ->first();
@@ -28,45 +30,42 @@ class ArticleObserver
                 $galleryEntry->active = '1';
             }
 
-            $galleryEntry->image_name = $article->image; // These will be updated with correct paths by the processor logic if needed
-            $galleryEntry->thumb_name = $article->thumbnail_image;
+            // Get the processed filename (after observer runs)
+            $processedImage = $article->getAttributes()['image'];
+            $processedThumb = $article->getAttributes()['thumbnail_image'] ?? '';
+            
+            $galleryEntry->image_name = basename($processedImage);
+            $galleryEntry->thumb_name = $processedThumb;
             $galleryEntry->save();
         }
-
-        // 2. Handle Gallery Images (The Repeater items)
-        // Since the repeater saves related models, we might need a separate observer for ArticleImage
-        // OR we just rely on the fact that Filament saves them to the temp folder, 
-        // and we can fix them in the ArticleImageObserver (See Step 4b below).
     }
 
     /**
-     * Helper to Move File to ID folder and Create Thumbnail
+     * Process image: Move from temp to article folder and create thumbnail
      */
-    private function processImage($model, $imageCol, $thumbCol)
+    private function processImage(Article $article, string $imagePath): void
     {
-        $originalPath = $model->$imageCol; // e.g., uploads/news/temp/abc.jpg
-
-        // If it's already in the correct folder, just ensure we store only the filename
-        if (strpos($originalPath, "uploads/news/{$model->news_id}/") !== false) {
-            // Extract just the filename for DB storage (legacy format)
-            $fileName = basename($originalPath);
-            if ($model->$imageCol !== $fileName) {
-                $model->$imageCol = $fileName;
-                $model->saveQuietly();
-            }
-            return;
-        }
-
-        // If it's just a filename (no path), it's already processed, skip
-        if (!str_contains($originalPath, '/')) {
-            return;
-        }
-
         $disk = Storage::disk('public');
+        
+        // If it's already in the correct folder, just store filename
+        if (str_contains($imagePath, "uploads/news/{$article->news_id}/")) {
+            $fileName = basename($imagePath);
+            $article->setRawAttributes(array_merge(
+                $article->getAttributes(),
+                ['image' => $fileName]
+            ));
+            $article->saveQuietly();
+            return;
+        }
 
-        // Define new paths
-        $fileName = basename($originalPath);
-        $newDir = "uploads/news/{$model->news_id}/";
+        // If it's just a filename (no path), it's already processed
+        if (!str_contains($imagePath, '/')) {
+            return;
+        }
+
+        // It's a temp file, need to move it
+        $fileName = basename($imagePath);
+        $newDir = "uploads/news/{$article->news_id}/";
         $newPath = $newDir . $fileName;
         $thumbDir = $newDir . "thumb/";
         $thumbName = pathinfo($fileName, PATHINFO_FILENAME) . "_thumb.jpg";
@@ -77,31 +76,22 @@ class ArticleObserver
         if (!$disk->exists($thumbDir)) $disk->makeDirectory($thumbDir);
 
         // Move the main file
-        if ($disk->exists($originalPath)) {
-            $disk->move($originalPath, $newPath);
+        if ($disk->exists($imagePath)) {
+            $disk->move($imagePath, $newPath);
 
-            // Update Model to point to new path (or just filename if legacy expects that)
-            // Legacy seems to store just the filename in DB? 
-            // Based on save.php: $finalName = build_target_name... $database->insert(..., $finalName)
-            // So DB stores: "news_img_2023...jpg" (Just the name)
+            // Generate thumbnail
+            $this->createThumbnail($disk->path($newPath), $disk->path($thumbPath), 150, 150);
 
-            // We update the model with JUST the filename to match legacy
-            $model->$imageCol = $fileName;
+            // Update model with just the filename (legacy format)
+            $article->setRawAttributes(array_merge(
+                $article->getAttributes(),
+                [
+                    'image' => $fileName,
+                    'thumbnail_image' => $thumbName,
+                ]
+            ));
+            $article->saveQuietly();
         }
-
-        // Generate Thumbnail (Using GD, same as legacy)
-        $fullPath = $disk->path($newPath);
-        $fullThumbPath = $disk->path($thumbPath);
-
-        $this->createThumbnail($fullPath, $fullThumbPath, 150, 150);
-
-        // Update Thumb Column
-        if ($thumbCol) {
-            $model->$thumbCol = $thumbName;
-        }
-
-        // Save quietly to avoid infinite loops
-        $model->saveQuietly();
     }
 
     private function createThumbnail($src, $dest, $w, $h)

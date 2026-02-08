@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Articles\Schemas;
 
 use App\Models\Author;
+use App\Models\Category;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -16,8 +17,6 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ArticleForm
 {
@@ -36,9 +35,8 @@ class ArticleForm
 
                 Select::make('id_cat')
                     ->label('Type')
-                    ->relationship('category', 'name')
+                    ->options(Category::all()->pluck('name', 'id'))
                     ->searchable()
-                    ->preload()
                     ->required(),
 
                 Select::make('author')
@@ -67,39 +65,20 @@ class ArticleForm
                     ->dehydrated(true),
 
                 // 1. COVER IMAGE (Main)
+                // Model accessor returns full path for preview, mutator handles save
                 FileUpload::make('image')
                     ->label('Cover Image')
                     ->image()
                     ->disk('public')
                     ->columnSpanFull()
-                    // We save to a temp folder first; the Observer will move it to {id}/
                     ->directory('uploads/news/temp')
-                    ->visibility('public')
-                    // Convert stored filename back to full path for preview
-                    ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => $file->getClientOriginalName())
-                    ->afterStateHydrated(function (FileUpload $component, $state, $record) {
-                        if ($record && $state && !str_contains($state, '/')) {
-                            // State is just a filename, convert to full path
-                            $fullPath = "uploads/news/{$record->news_id}/{$state}";
-                            if (Storage::disk('public')->exists($fullPath)) {
-                                $component->state([$fullPath]);
-                            }
-                        }
-                    })
-                    ->dehydrateStateUsing(function ($state) {
-                        // If state is an array, get the first value
-                        $path = is_array($state) ? ($state[0] ?? null) : $state;
-                        if (!$path) return null;
-                        
-                        // If it's already just a filename (no slashes), return as-is
-                        // Otherwise return the full path (observer will handle it)
-                        return $path;
-                    }),
+                    ->visibility('public'),
 
 
-                // 2. GALLERY (Multiple Images) Gallery
+                // 2. GALLERY (Multiple Images)
+                // ArticleImage model accessor/mutator handles path conversion
                 Repeater::make('images')
-                    ->relationship('images') // Connects to the hasMany we created
+                    ->relationship('images')
                     ->label('Gallery')
                     ->schema([
                         FileUpload::make('image_name')
@@ -108,29 +87,7 @@ class ArticleForm
                             ->disk('public')
                             ->directory('uploads/news/temp')
                             ->visibility('public')
-                            ->required()
-                            // Convert stored filename back to full path for preview
-                            ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => $file->getClientOriginalName())
-                            ->afterStateHydrated(function (FileUpload $component, $state, $record) {
-                                if ($record && $state && !str_contains($state, '/')) {
-                                    // State is just a filename, convert to full path
-                                    $fullPath = "uploads/news/{$record->news_id}/{$state}";
-                                    if (Storage::disk('public')->exists($fullPath)) {
-                                        $component->state([$fullPath]);
-                                    }
-                                }
-                            })
-                            ->dehydrateStateUsing(function ($state) {
-                                // If state is an array, get the first value
-                                $path = is_array($state) ? ($state[0] ?? null) : $state;
-                                if (!$path) return null;
-                                
-                                // Return the path (observer will handle it)
-                                return $path;
-                            }),
-
-                        // These satisfy the "NOT NULL" rules during the first INSERT.
-                        // The Observer will overwrite 'thumb_name' milliseconds later.
+                            ->required(),
 
                         Hidden::make('thumb_name')
                             ->default('')
@@ -144,18 +101,12 @@ class ArticleForm
                             ->default('0')
                             ->dehydrateStateUsing(fn($state) => '0'),
                     ])
-                    ->grid(2) // Show 2 images per row
+                    ->grid(2)
                     ->addActionLabel('Add Image')
                     ->addActionAlignment('start')
                     ->columnSpanFull()
                     ->defaultItems(0),
 
-
-                // Checkbox::make('active')
-                //     ->label('Published')
-                //     ->default(true)
-                //     // Force convert boolean true/false to string '1'/'0'
-                //     ->dehydrateStateUsing(fn($state) => $state ? '1' : '0'),
 
                 Group::make([
                     Checkbox::make('important')

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Storage;
 
 class Article extends Model
 {
@@ -53,6 +54,48 @@ class Article extends Model
 
     // --- 3. ACCESSORS & MUTATORS (The "Clean Code" Layer) ---
 
+    /**
+     * Image accessor/mutator: Converts between filename (DB) and full path (App)
+     * 
+     * GET: "filename.jpg" → "uploads/news/{id}/filename.jpg"
+     * SET: "uploads/news/temp/filename.jpg" → stores "uploads/news/temp/filename.jpg" (observer handles the rest)
+     *      "uploads/news/{id}/filename.jpg" → stores "filename.jpg" (already processed)
+     */
+    protected function image(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (!$value) return null;
+                
+                // If it's already a full path, return as-is
+                if (str_contains($value, '/')) {
+                    return $value;
+                }
+                
+                // Convert filename to full path for existing articles
+                if ($this->news_id) {
+                    $fullPath = "uploads/news/{$this->news_id}/{$value}";
+                    if (Storage::disk('public')->exists($fullPath)) {
+                        return $fullPath;
+                    }
+                }
+                
+                return $value;
+            },
+            set: function ($value) {
+                if (!$value) return null;
+                
+                // If it's in the article's folder, extract just filename for DB
+                if ($this->news_id && str_contains($value, "uploads/news/{$this->news_id}/")) {
+                    return basename($value);
+                }
+                
+                // For temp uploads or new files, store full path (observer will process)
+                return $value;
+            },
+        );
+    }
+
     // Title: Maps 'title' <-> 'news_title'
     protected function title(): Attribute
     {
@@ -95,5 +138,23 @@ class Article extends Model
     public function images()
     {
         return $this->hasMany(ArticleImage::class, 'news_id');
+    }
+
+    // --- 5. HELPER METHODS ---
+    
+    /**
+     * Get the raw image filename as stored in DB (bypasses accessor)
+     */
+    public function getRawImageAttribute(): ?string
+    {
+        return $this->attributes['image'] ?? null;
+    }
+
+    /**
+     * Get the directory path for this article's images
+     */
+    public function getImageDirectoryAttribute(): string
+    {
+        return "uploads/news/{$this->news_id}";
     }
 }
